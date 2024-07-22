@@ -35,9 +35,11 @@ To run this project, ensure that you have the following installed:
     ```sh
     mvn clean install
     ```
+## Downloading the Data
+Download the [data](https://www.dropbox.com/scl/fi/azxswgry8jjk23o92vsy0/rapidash_data.zip?rlkey=rvosjfu30dzznyrki824bghy0&st=ijqiiov0&dl=0) and uncompress.
 
 ## Running the Project
-    ```sh
-    java -cp target/sigmodrevision2-1.0-SNAPSHOT-jar-with-dependencies.jar org.example.Main <dataset>
-    ```
+   ```sh
+    java -cp target/sigmodrevision2-1.0-SNAPSHOT-jar-with-dependencies.jar org.example.Main
+   ```
 where <dataset> should be one of "tax", "tpch" and "ncvoter" 
