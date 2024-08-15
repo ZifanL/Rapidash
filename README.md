@@ -36,7 +36,7 @@ To run this project, ensure that you have the following installed:
     mvn clean install
     ```
 ## Downloading the Data
-Download the [data](https://www.dropbox.com/scl/fi/azxswgry8jjk23o92vsy0/rapidash_data.zip?rlkey=rvosjfu30dzznyrki824bghy0&st=ijqiiov0&dl=0) and uncompress.
+Download the [data](https://www.dropbox.com/scl/fi/azxswgry8jjk23o92vsy0/rapidash_data.zip?rlkey=rvosjfu30dzznyrki824bghy0&st=ijqiiov0&dl=0) and uncompress. Note that the values in the datasets are encoded as integers, and the order is preserved for numerical values.
 
 ## Running the Project
    ```sh
