@@ -1,4 +1,4 @@
-package org.example;
+package org.dc;
 
 import org.apache.commons.lang3.tuple.Pair;
 import trees.AVLTree;

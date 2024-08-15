@@ -1,4 +1,4 @@
-package org.example;
+package org.dc;
 
 import kdrange.KDTreeHelper;
 import kdrange.KeyDuplicateException;

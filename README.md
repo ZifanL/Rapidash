@@ -40,6 +40,6 @@ Download the [data](https://www.dropbox.com/scl/fi/azxswgry8jjk23o92vsy0/rapidas
 
 ## Running the Project
    ```sh
-    java -cp target/sigmodrevision2-1.0-SNAPSHOT-jar-with-dependencies.jar org.example.Main [dataset]
+    java -cp target/rapidash-1.0-SNAPSHOT-jar-with-dependencies.jar org.dc.Main [dataset]
    ```
 where [dataset] should be one of "tax", "tpch" and "ncvoter" 
