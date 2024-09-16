@@ -50,14 +50,26 @@ public class Main {
 
     public static void main(String[] args) throws IOException, KeyDuplicateException, KeySizeException {
         if (args.length < 1) {
-            System.out.println("Please specify the dataset. Choose from: tax, tpch, ncvoter");
+            System.out.println("Please specify the dataset. Choose from: tax, tpch, ncvoter or provide the path to a customized csv file.");
             System.exit(1);
         }
         String dataset = args[0];
         if (!isValidDataset(dataset)) {
-            System.out.println("Invalid dataset: " + dataset);
-            System.out.println("Choose from: tax, tpch, ncvoter");
-            System.exit(1);
+        	InputTable input = new InputTable(dataset);
+            for (Map.Entry<String, Integer> entry : input.nameLoc.entrySet()) {
+                System.out.println("Key: " + entry.getKey() + ", Value: " + entry.getValue());
+            }
+            for (int i = 0; i < input.data.length; i++) {
+                for (int j = 0; j < input.data[i].length; j++) {
+                    System.out.print(input.data[i][j] + " ");
+                }
+                System.out.println();  // Move to the next line after each row
+            }
+        	if (args.length < 2) {
+                System.out.println("Please provide the path to the contraint file.");
+                System.exit(1);
+        	}
+        	
         }
         System.out.println("Using dataset: " + dataset);
         Path path;
