@@ -9,4 +9,9 @@ public class Predicate {
 		this.column2 = column2;
 		this.operator = operator;
 	}
+	
+	@Override
+	public String toString() {
+		return "s." + this.column1 + " " + this.operator + " t." + this.column2;
+	}
 }

@@ -8,6 +8,7 @@ import java.util.Map;
 
 public class Constraint {
 	ArrayList<SingleConstraint> singleConstraints = new ArrayList<>();
+	ArrayList<Predicate> predicates = new ArrayList<>();
 	
 	public Constraint(String filePath, Map<String, Integer> nameLoc) {
 		this.loadConstraint(filePath, nameLoc);
@@ -47,24 +48,27 @@ public class Constraint {
 	        if (nameLoc.get(colName1) == null) throw new IllegalArgumentException("Column " + colName1 + " does not exist! Column list: " + nameLoc.keySet());
 	        if (nameLoc.get(colName2) == null) throw new IllegalArgumentException("Column " + colName2 + " does not exist! Column list: " + nameLoc.keySet());
 	        
-	        if (opName == "==" || opName == "=") {
-	        	if (colName1 == colName2) {
+	        if (opName.equals("==") || opName.equals("=")) {
+	        	if (colName1.equals(colName2)) {
 	        		homoEqPreds.add(new Predicate(colName1, colName2, "=="));
 	        	}
-	        } else if (opName == "<>" || opName == "!=") {
+	        } else if (opName.equals("<>") || opName.equals("!=")) {
 	        	uneqPreds.add(new Predicate(colName1, colName2, "<>"));
-	        } else if (opName == ">" || opName == "<" || opName == ">=" || opName == "<="){
+	        } else if (opName.equals(">") || opName.equals("<") || opName.equals(">=") || opName.equals("<=")){
 	        	ineqPreds.add(new Predicate(colName1, colName2, opName));
 	        } else {
 	        	throw new IllegalArgumentException("Operator " + opName + " is not valid! OPerator should be in [==, <>, <, >, <=, >=]");
 	        }
 	    }
+	    this.predicates.addAll(homoEqPreds);
+	    this.predicates.addAll(ineqPreds);
+	    this.predicates.addAll(uneqPreds);
 	    
 	    for (String binaryString : this.generateBinaryCombinations(uneqPreds.size())) {
 	    	ArrayList<Predicate> allPreds = new ArrayList<>();
 	    	allPreds.addAll(homoEqPreds);
 	    	allPreds.addAll(ineqPreds);
-	    	for (int i = 0; i < columns1.size(); i++) {
+	    	for (int i = 0; i < uneqPreds.size(); i++) {
 	    		allPreds.add(new Predicate(uneqPreds.get(i).column1, uneqPreds.get(i).column2, binary2Op(binaryString.charAt(i))));
 	    	}
 	    	this.singleConstraints.add(new SingleConstraint(allPreds));
@@ -95,4 +99,13 @@ public class Constraint {
         }
         return allCombos;
     }
+
+	@Override
+	public String toString() {
+		ArrayList<String> predStrings = new ArrayList<>();
+		for (Predicate pred : this.predicates) {
+			predStrings.add(pred.toString());
+		}
+		return "NOT (" + String.join(" AND ", predStrings) + ")";
+	}
 }
