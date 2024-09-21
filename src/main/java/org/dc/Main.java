@@ -26,6 +26,7 @@ public class Main {
         	Constraint constraint = new Constraint(args[1], input.nameLoc);
         	System.out.println("Using customized dataset: " + dataset);
         	System.out.println("Constraint: " + constraint);
+        	DCVerifier dcVerifier = new DCVerifier(constraint, input);
         } else {
         	System.out.println("Run the experiments in the paper, dataset: " + dataset);
         	Experiment exp = new Experiment(dataset);

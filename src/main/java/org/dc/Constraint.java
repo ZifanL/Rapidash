@@ -7,11 +7,14 @@ import java.util.ArrayList;
 import java.util.Map;
 
 public class Constraint {
-	ArrayList<SingleConstraint> singleConstraints = new ArrayList<>();
 	ArrayList<Predicate> predicates = new ArrayList<>();
 	
 	public Constraint(String filePath, Map<String, Integer> nameLoc) {
 		this.loadConstraint(filePath, nameLoc);
+	}
+	
+	public Constraint(ArrayList<Predicate> predicates) {
+		this.predicates.addAll(predicates);
 	}
 	
     public void loadConstraint(String filePath, Map<String, Integer> nameLoc) {
@@ -50,54 +53,43 @@ public class Constraint {
 	        
 	        if (opName.equals("==") || opName.equals("=")) {
 	        	if (colName1.equals(colName2)) {
-	        		homoEqPreds.add(new Predicate(colName1, colName2, "=="));
+	        		this.predicates.add(new Predicate(colName1, colName2, "=="));
 	        	}
 	        } else if (opName.equals("<>") || opName.equals("!=")) {
-	        	uneqPreds.add(new Predicate(colName1, colName2, "<>"));
+	        	this.predicates.add(new Predicate(colName1, colName2, "<>"));
 	        } else if (opName.equals(">") || opName.equals("<") || opName.equals(">=") || opName.equals("<=")){
-	        	ineqPreds.add(new Predicate(colName1, colName2, opName));
+	        	this.predicates.add(new Predicate(colName1, colName2, opName));
 	        } else {
 	        	throw new IllegalArgumentException("Operator " + opName + " is not valid! OPerator should be in [==, <>, <, >, <=, >=]");
 	        }
 	    }
-	    this.predicates.addAll(homoEqPreds);
-	    this.predicates.addAll(ineqPreds);
-	    this.predicates.addAll(uneqPreds);
-	    
-	    for (String binaryString : this.generateBinaryCombinations(uneqPreds.size())) {
-	    	ArrayList<Predicate> allPreds = new ArrayList<>();
-	    	allPreds.addAll(homoEqPreds);
-	    	allPreds.addAll(ineqPreds);
-	    	for (int i = 0; i < uneqPreds.size(); i++) {
-	    		allPreds.add(new Predicate(uneqPreds.get(i).column1, uneqPreds.get(i).column2, binary2Op(binaryString.charAt(i))));
-	    	}
-	    	this.singleConstraints.add(new SingleConstraint(allPreds));
-	    }
     }
     
-    private static String binary2Op(char binary) {
-    	if (binary == '0') {
-    		return "<";
-    	} else {
-    		return ">";
+    
+    public ArrayList<Constraint> decompose() {
+    	ArrayList<Constraint> DCs = new ArrayList<Constraint>();
+    	ArrayList<Predicate> predicates1 = new ArrayList<Predicate>();
+    	ArrayList<Predicate> predicates2 = new ArrayList<Predicate>();
+    	boolean foundUneq = false;
+    	for (Predicate pred : this.predicates) {
+    		if (!foundUneq && pred.operator.equals("<>")) {
+    			predicates1.add(new Predicate(pred.column1, pred.column2, ">"));
+    			predicates2.add(new Predicate(pred.column1, pred.column2, "<"));
+    			foundUneq = true;
+    		} else {
+    			predicates1.add(pred);
+    			predicates2.add(pred);
+    		}
     	}
-    }
-    
-    private static ArrayList<String> generateBinaryCombinations(int n) {
-        // Total number of combinations is 2^n
-        int totalCombinations = (int) Math.pow(2, n);
-        ArrayList<String> allCombos = new ArrayList<>();
-        // Iterate over each number from 0 to 2^n - 1
-        for (int i = 0; i < totalCombinations; i++) {
-            // Convert the current number to a binary string
-            String binaryString = Integer.toBinaryString(i);
-            // Add leading zeros to make sure the binary string has exactly n bits
-            while (binaryString.length() < n) {
-                binaryString = "0" + binaryString;
-            }
-            allCombos.add(binaryString);
-        }
-        return allCombos;
+    	if (foundUneq) {
+    		Constraint DC1 = new Constraint(predicates1);
+    		Constraint DC2 = new Constraint(predicates2);
+    		DCs.addAll(DC1.decompose());
+    		DCs.addAll(DC2.decompose());
+    	} else {
+    		DCs.add(new Constraint(predicates1));
+    	}
+    	return DCs;
     }
 
 	@Override
