@@ -1,4 +1,4 @@
-package range;
+package rangetree;
 
 import java.util.Arrays;
 
