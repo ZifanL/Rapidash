@@ -12,8 +12,8 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.stream.Stream;
 
-import kdrange.KeyDuplicateException;
-import kdrange.KeySizeException;
+import kdrangeDouble.KeyDuplicateException;
+import kdrangeDouble.KeySizeException;
 
 public class Experiment {
 	public String dataset;

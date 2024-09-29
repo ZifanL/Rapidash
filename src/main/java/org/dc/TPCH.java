@@ -1,10 +1,11 @@
 package org.dc;
 
-import kdrange.KDTreeHelper;
-import kdrange.KeyDuplicateException;
-import kdrange.KeySizeException;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
+
+import kdrangeDouble.KDTreeHelper;
+import kdrangeDouble.KeyDuplicateException;
+import kdrangeDouble.KeySizeException;
 import rangetreeboolean.PointNew;
 import rangetreeboolean.RangeTreeBoolean;
 import trees.AVLTree;

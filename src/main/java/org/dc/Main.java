@@ -1,14 +1,14 @@
 package org.dc;
 
-import kdrange.KeyDuplicateException;
-import kdrange.KeySizeException;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import kdrangeDouble.KeyDuplicateException;
+import kdrangeDouble.KeySizeException;
+
 public class Main {
-    public static void main(String[] args) throws IOException, KeyDuplicateException, KeySizeException {
+    public static void main(String[] args) throws IOException, KeyDuplicateException, KeySizeException, kdrange.KeySizeException, kdrange.KeyDuplicateException {
     	Map<String, String> namedArgs = argsParse(args);
     	if (namedArgs.get("experiment") != null) {
     		if (!isValidExperiment(namedArgs.get("experiment"))) {

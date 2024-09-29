@@ -1,11 +1,14 @@
 package org.dc;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import kdrange.KDTree;
+import kdrange.KDTreeHelper;
+import kdrange.KeyDuplicateException;
+import kdrange.KeySizeException;
 import trees.AVLTree;
 
 public class DCVerifier {
@@ -21,7 +24,7 @@ public class DCVerifier {
 		this.input = input;
 	}
 	
-	public long detectViolation(boolean earlyStop) {
+	public long detectViolation(boolean earlyStop) throws KeySizeException, KeyDuplicateException {
 		long violationCount = 0;
 		for (Constraint DC : atomDCs) {
 			violationCount += detectViolationSingle(DC, earlyStop);
@@ -32,7 +35,7 @@ public class DCVerifier {
 		return violationCount;
 	}
 	
-	private long detectViolationSingle(Constraint DC, boolean earlyStop) {
+	private long detectViolationSingle(Constraint DC, boolean earlyStop) throws KeySizeException, KeyDuplicateException {
 		System.out.println("Detecting violations for: " + DC);
 		ArrayList<Integer> homoEqLocs = new ArrayList<Integer>();
 		// Column indices and operator of the inequalities
@@ -54,15 +57,21 @@ public class DCVerifier {
 		}
 		if (ops.size() == 1) {
 			if (uneqLocs1.equals(uneqLocs2)) {
-				System.out.println("[Type] Homogeneous DC");
+				System.out.println("[Type] Homogeneous DC (one inequality)");
 				return countViolationsAVLTreeHomo(homoEqLocs, uneqLocs1.get(0), ops.get(0), earlyStop);
 			} else {
-				System.out.println("[Type] Heterogeneous DC");
+				System.out.println("[Type] Heterogeneous DC (one inequality)");
 				return countViolationsAVLTreeHeter(homoEqLocs, uneqLocs1.get(0), uneqLocs2.get(0), ops.get(0), earlyStop);
 			}
-			
 		}
-		return 0;
+		
+		if (uneqLocs1.equals(uneqLocs2)) {
+			System.out.println("[Type] Homogeneous DC (multiple inequalities)");
+			return countViolationsKDTreeHomo(homoEqLocs, uneqLocs1, ops, earlyStop);
+		} else {
+			System.out.println("[Type] Heterogeneous DC (multiple inequalities)");
+			return countViolationsKDTreeHeter(homoEqLocs, uneqLocs1, uneqLocs2, ops, earlyStop);
+		}
 	}
 	
 	private String reverseOp(String op) {
@@ -73,11 +82,105 @@ public class DCVerifier {
 		return op;
 	}
 	
+	private ArrayList<String> reverseOp(ArrayList<String> ops) {
+		ArrayList<String> opsReversed = new ArrayList<>();
+		for (String op : ops) {
+			opsReversed.add(reverseOp(op));
+		}
+		return opsReversed;
+	}
+	
+	private void computeBounds(int[] values, int[] upper, int[] lower, ArrayList<String> ops) {
+		for (int k = 0; k < ops.size(); k++) {
+			if (ops.get(k).equals(">")) {lower[k] = values[k] + 1; upper[k] = Integer.MAX_VALUE; continue;}
+			if (ops.get(k).equals("<")) {lower[k] = Integer.MIN_VALUE; upper[k] = values[k] - 1; continue;}
+			if (ops.get(k).equals(">=")) {lower[k] = values[k]; upper[k] = Integer.MAX_VALUE; continue;}
+			if (ops.get(k).equals("<=")) {lower[k] = Integer.MIN_VALUE; upper[k] = values[k]; continue;}
+		}
+	}
+	
+	private long countViolationsKDTreeHomo(ArrayList<Integer> homoEqLocs, ArrayList<Integer> uneqLocs,
+			ArrayList<String> ops, boolean earlyStop) throws KeySizeException, KeyDuplicateException {
+	    /*
+	     * Use kd trees to find violations.
+	     * The columns on the left-hand-side and the right-hand-side are the same.
+	     */
+		long violationCount = 0;
+		Map<List<Integer>, KDTreeHelper<Integer>> treesMap = new HashMap<>();
+		for (int i = 0; i < input.data.length; ++i) {
+			List<Integer> eqValues = new ArrayList<>();
+			for (int j : homoEqLocs) {
+				eqValues.add(input.data[i][j]);
+			}
+	        int[] ineqValues = new int[ops.size()];
+	        for (int k = 0; k < ops.size(); k++) {
+	            ineqValues[k] = input.data[i][uneqLocs.get(k)];
+	        }
+			if (treesMap.containsKey(eqValues)) {
+				int[] upperBound = new int[ops.size()];
+				int[] lowerBound = new int[ops.size()];
+				computeBounds(ineqValues, upperBound, lowerBound, ops);
+				violationCount += treesMap.get(eqValues).rangeCount(lowerBound, upperBound);
+				computeBounds(ineqValues, upperBound, lowerBound, reverseOp(ops));
+				violationCount += treesMap.get(eqValues).rangeCount(lowerBound, upperBound);
+				if (earlyStop && violationCount > 0) {
+					return violationCount;
+				}
+			} else {
+				treesMap.put(eqValues, new KDTreeHelper<>(ops.size()));
+			}
+			treesMap.get(eqValues).insert(ineqValues, i);
+		}	
+		return violationCount;
+	}
+	
+	private long countViolationsKDTreeHeter(ArrayList<Integer> homoEqLocs, ArrayList<Integer> uneqLocsLeft,
+			ArrayList<Integer> uneqLocsRight, ArrayList<String> ops, boolean earlyStop) throws KeySizeException, KeyDuplicateException {
+	    /*
+	     * Use KD trees to find violations.
+	     * The columns on the left-hand-side and the right-hand-side are different.
+	     */
+		long violationCount = 0;
+		Map<List<Integer>, KDTreeHelper<Integer>> treesMapAsLeftSide = new HashMap<>();
+		Map<List<Integer>, KDTreeHelper<Integer>> treesMapAsRightSide = new HashMap<>();
+		for (int i = 0; i < input.data.length; ++i) {
+			List<Integer> eqValues = new ArrayList<>();
+			for (int j : homoEqLocs) {
+				eqValues.add(input.data[i][j]);
+			}
+	        int[] ineqValuesLeft = new int[ops.size()];
+	        for (int k = 0; k < ops.size(); k++) {
+	            ineqValuesLeft[k] = input.data[i][uneqLocsLeft.get(k)];
+	        }
+	        int[] ineqValuesRight = new int[ops.size()];
+	        for (int k = 0; k < ops.size(); k++) {
+	            ineqValuesRight[k] = input.data[i][uneqLocsRight.get(k)];
+	        }
+			if (treesMapAsLeftSide.containsKey(eqValues)) {
+				int[] upperBound = new int[ops.size()];
+				int[] lowerBound = new int[ops.size()];
+				computeBounds(ineqValuesRight, upperBound, lowerBound, ops);
+				violationCount += treesMapAsLeftSide.get(eqValues).rangeCount(lowerBound, upperBound);
+				computeBounds(ineqValuesLeft, upperBound, lowerBound, ops);
+				violationCount += treesMapAsRightSide.get(eqValues).rangeCount(lowerBound, upperBound);
+				if (earlyStop && violationCount > 0) {
+					return violationCount;
+				}
+			} else {
+				treesMapAsLeftSide.put(eqValues, new KDTreeHelper<>(ops.size()));
+				treesMapAsRightSide.put(eqValues, new KDTreeHelper<>(ops.size()));
+			}
+			treesMapAsLeftSide.get(eqValues).insert(ineqValuesLeft, i);
+			treesMapAsRightSide.get(eqValues).insert(ineqValuesRight, i);
+		}	
+		return violationCount;
+	}
+	
 	private long countViolationsAVLTreeHomo(ArrayList<Integer> homoEqLocs, Integer uneqLoc,
 			String op, boolean earlyStop) {
 	    /*
 	     * Use AVL trees to find violations when there is only one inequality.
-	     * The two columns on the left-hand-side and the right-hand-side are the same.
+	     * The columns on the left-hand-side and the right-hand-side are the same.
 	     */
 		long violationCount = 0;
 		Map<List<Integer>, AVLTree> treesMap = new HashMap<>();
@@ -104,7 +207,7 @@ public class DCVerifier {
 			Integer uneqLocRight, String op, boolean earlyStop) {
 	    /*
 	     * Use AVL trees to find violations when there is only one inequality.
-	     * The two columns on the left-hand-side and the right-hand-side are the same.
+	     * The columns on the left-hand-side and the right-hand-side are different.
 	     */
 		long violationCount = 0;
 		Map<List<Integer>, AVLTree> treesMapAsLeftSide = new HashMap<>();
