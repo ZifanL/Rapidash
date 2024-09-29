@@ -40,10 +40,6 @@ public class Constraint {
             System.err.println("Error reading file: " + e.getMessage());
         }
         
-        ArrayList<Predicate> homoEqPreds = new ArrayList<>();
-        ArrayList<Predicate> uneqPreds = new ArrayList<>();
-        ArrayList<Predicate> ineqPreds = new ArrayList<>();
-        
 	    for (int i = 0; i < columns1.size(); i++) {
 	        String colName1 = columns1.get(i);
 	        String colName2 = columns2.get(i);
@@ -52,9 +48,7 @@ public class Constraint {
 	        if (nameLoc.get(colName2) == null) throw new IllegalArgumentException("Column " + colName2 + " does not exist! Column list: " + nameLoc.keySet());
 	        
 	        if (opName.equals("==") || opName.equals("=")) {
-	        	if (colName1.equals(colName2)) {
-	        		this.predicates.add(new Predicate(colName1, colName2, "=="));
-	        	}
+	        	this.predicates.add(new Predicate(colName1, colName2, "=="));
 	        } else if (opName.equals("<>") || opName.equals("!=")) {
 	        	this.predicates.add(new Predicate(colName1, colName2, "<>"));
 	        } else if (opName.equals(">") || opName.equals("<") || opName.equals(">=") || opName.equals("<=")){
@@ -76,6 +70,13 @@ public class Constraint {
     			predicates1.add(new Predicate(pred.column1, pred.column2, ">"));
     			predicates2.add(new Predicate(pred.column1, pred.column2, "<"));
     			foundUneq = true;
+    		} else if (pred.operator.equals("==") && !pred.column1.equals(pred.column2)){
+    			Predicate predGeq = new Predicate(pred.column1, pred.column2, ">=");
+    			Predicate predLeq = new Predicate(pred.column1, pred.column2, "<=");
+    			predicates1.add(predGeq);
+    			predicates1.add(predLeq);
+    			predicates2.add(predGeq);
+    			predicates2.add(predLeq);
     		} else {
     			predicates1.add(pred);
     			predicates2.add(pred);
