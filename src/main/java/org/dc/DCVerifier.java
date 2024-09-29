@@ -161,7 +161,7 @@ public class DCVerifier {
 				int[] lowerBound = new int[ops.size()];
 				computeBounds(ineqValuesRight, upperBound, lowerBound, ops);
 				violationCount += treesMapAsLeftSide.get(eqValues).rangeCount(lowerBound, upperBound);
-				computeBounds(ineqValuesLeft, upperBound, lowerBound, ops);
+				computeBounds(ineqValuesLeft, upperBound, lowerBound, reverseOp(ops));
 				violationCount += treesMapAsRightSide.get(eqValues).rangeCount(lowerBound, upperBound);
 				if (earlyStop && violationCount > 0) {
 					return violationCount;
