@@ -27,6 +27,11 @@ public class Main {
            	if (namedArgs.get("earlystop") != null && namedArgs.get("earlystop").toLowerCase().equals("false")) {
            		earlystop = false;
            	}
+           	String treeType = "range-tree";
+           	if (namedArgs.get("treetype") != null && namedArgs.get("treetype").toLowerCase().startsWith("kd")) {
+           		treeType = "kd-tree";
+           	}
+           	
     		String dataset = namedArgs.get("dataset");
            	InputTable input = new InputTable(dataset);
         	Constraint constraint = new Constraint(namedArgs.get("constraint"), input.nameLoc);
@@ -37,7 +42,7 @@ public class Main {
         	System.out.println("* Start violation detection");
         	
         	DCVerifier dcVerifier = new DCVerifier(constraint, input);
-        	System.out.println("Number of violations: " + dcVerifier.detectViolation(earlystop));
+        	System.out.println("Number of violations: " + dcVerifier.detectViolation(earlystop, treeType));
     	}
     }
     
