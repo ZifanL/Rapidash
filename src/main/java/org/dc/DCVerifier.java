@@ -141,8 +141,10 @@ public class DCVerifier {
 	     * The columns on the left-hand-side and the right-hand-side are different.
 	     */
 		long violationCount = 0;
+		
 		Map<List<Integer>, KDTreeHelper<Integer>> treesMapAsLeftSide = new HashMap<>();
 		Map<List<Integer>, KDTreeHelper<Integer>> treesMapAsRightSide = new HashMap<>();
+		
 		for (int i = 0; i < input.data.length; ++i) {
 			List<Integer> eqValues = new ArrayList<>();
 			for (int j : homoEqLocs) {
@@ -156,13 +158,16 @@ public class DCVerifier {
 	        for (int k = 0; k < ops.size(); k++) {
 	            ineqValuesRight[k] = input.data[i][uneqLocsRight.get(k)];
 	        }
+			
 			if (treesMapAsLeftSide.containsKey(eqValues)) {
 				int[] upperBound = new int[ops.size()];
 				int[] lowerBound = new int[ops.size()];
 				computeBounds(ineqValuesRight, upperBound, lowerBound, ops);
 				violationCount += treesMapAsLeftSide.get(eqValues).rangeCount(lowerBound, upperBound);
+				
 				computeBounds(ineqValuesLeft, upperBound, lowerBound, reverseOp(ops));
 				violationCount += treesMapAsRightSide.get(eqValues).rangeCount(lowerBound, upperBound);
+				
 				if (earlyStop && violationCount > 0) {
 					return violationCount;
 				}
@@ -170,9 +175,10 @@ public class DCVerifier {
 				treesMapAsLeftSide.put(eqValues, new KDTreeHelper<>(ops.size()));
 				treesMapAsRightSide.put(eqValues, new KDTreeHelper<>(ops.size()));
 			}
+			
 			treesMapAsLeftSide.get(eqValues).insert(ineqValuesLeft, i);
 			treesMapAsRightSide.get(eqValues).insert(ineqValuesRight, i);
-		}	
+		}
 		return violationCount;
 	}
 	

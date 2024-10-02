@@ -149,7 +149,11 @@ class KDNode<T> {
                    uppk.coord[j]>=t.k.coord[j]) {
                 j++;
             }
-            if (j==K) countInRange += 1;
+            if (j==K) {
+            	countInRange += t.count;
+            	if (t.left != null) countInRange -= t.left.count;
+            	if (t.right != null) countInRange -= t.right.count;
+            }
         }
         
         return countInRange + rcount(lowk, uppk, t.left, (lev+1)%K, K) + rcount(

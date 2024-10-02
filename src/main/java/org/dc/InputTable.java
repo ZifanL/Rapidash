@@ -4,6 +4,7 @@ import java.util.*;
 
 public class InputTable {
 	public int[][] data;
+	public String[] columnNames;
 	public Map<String, Integer> nameLoc = new HashMap<>();
 	
 	public InputTable(String csvFile) {
@@ -25,8 +26,10 @@ public class InputTable {
                 String[] row = line.split(delimiter);
                 if (isHeader) {
                     // Map header column names to their column index
+                	this.columnNames = new String[row.length];
                     for (int i = 0; i < row.length; i++) {
                     	nameLoc.put(row[i].trim(), i); // Map each header to its column index
+                    	this.columnNames[i] = row[i].trim();
                     }
                     isHeader = false; // Next line will be data
                 } else {
@@ -88,6 +91,34 @@ public class InputTable {
             return true; // It's a valid number
         } catch (NumberFormatException e) {
             return false; // It's not a valid number
+        }
+    }
+    
+    public void saveToCSV(String filePath) {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(filePath))) {
+            // Write headers
+            for (int i = 0; i < columnNames.length; i++) {
+                bw.write(columnNames[i]);
+                if (i < columnNames.length - 1) {
+                    bw.write(","); // Add a comma between headers
+                }
+            }
+            bw.newLine(); // Move to the next line after headers
+
+            // Write data rows
+            for (int[] row : data) {
+                for (int i = 0; i < row.length; i++) {
+                    bw.write(String.valueOf(row[i]));
+                    if (i < row.length - 1) {
+                        bw.write(","); // Add a comma between data values
+                    }
+                }
+                bw.newLine(); // Move to the next line after each row
+            }
+
+            System.out.println("CSV file has been created successfully.");
+        } catch (IOException e) {
+            System.err.println("Error while writing to CSV file: " + e.getMessage());
         }
     }
 
