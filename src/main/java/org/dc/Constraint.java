@@ -8,13 +8,16 @@ import java.util.Map;
 
 public class Constraint {
 	ArrayList<Predicate> predicates = new ArrayList<>();
+	boolean isSymmetric;
 	
 	public Constraint(String filePath, Map<String, Integer> nameLoc) {
 		this.loadConstraint(filePath, nameLoc);
+		this.isSymmetric();
 	}
 	
 	public Constraint(ArrayList<Predicate> predicates) {
 		this.predicates.addAll(predicates);
+		this.isSymmetric();
 	}
 	
     public void loadConstraint(String filePath, Map<String, Integer> nameLoc) {
@@ -59,6 +62,15 @@ public class Constraint {
 	    }
     }
     
+    private void isSymmetric() {
+    	for (Predicate pred : this.predicates) {
+    		if (!pred.column1.equals(pred.column2) || (!pred.operator.equals("==") && !pred.operator.equals("<>"))) {
+    			this.isSymmetric = false;
+    			return;
+    		}
+    	}
+    	this.isSymmetric = true;
+    }
     
     public ArrayList<Constraint> decompose() {
     	ArrayList<Constraint> DCs = new ArrayList<Constraint>();
@@ -82,12 +94,16 @@ public class Constraint {
     			predicates2.add(pred);
     		}
     	}
-    	if (foundUneq) {
+    	if (foundUneq && !this.isSymmetric) {
     		Constraint DC1 = new Constraint(predicates1);
     		Constraint DC2 = new Constraint(predicates2);
     		DCs.addAll(DC1.decompose());
     		DCs.addAll(DC2.decompose());
-    	} else {
+    	} else if (foundUneq) {
+    		Constraint DC1 = new Constraint(predicates1);
+    		DCs.addAll(DC1.decompose());
+    	}
+    	else {
     		DCs.add(new Constraint(predicates1));
     	}
     	return DCs;

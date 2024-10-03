@@ -16,6 +16,7 @@ import trees.AVLTree;
 public class DCVerifier {
 	ArrayList<Constraint> atomDCs = new ArrayList<Constraint>();
 	InputTable input;
+	boolean violationCountTwice;
 	
 	public DCVerifier(Constraint DC, InputTable input) {
 		this.atomDCs = DC.decompose();
@@ -24,6 +25,18 @@ public class DCVerifier {
 			System.out.println("- " + atomDC);
 		}
 		this.input = input;
+		
+		boolean allEq = true;
+		for (Predicate pred : DC.predicates) {
+			if (!pred.operator.equals("==")) {
+				allEq = false;
+				break;
+			}
+		}
+		this.violationCountTwice = DC.isSymmetric && !allEq;
+		if (this.violationCountTwice) {
+			System.out.println("The number of violations will be counted twice due to symmetricity.");
+		}
 	}
 	
 	public long detectViolation(boolean earlyStop, String treeType) throws KeySizeException, KeyDuplicateException {
@@ -33,6 +46,9 @@ public class DCVerifier {
 			if (earlyStop && violationCount > 0) {
 				return violationCount;
 			}
+		}
+		if (this.violationCountTwice) {
+			violationCount *= 2;
 		}
 		return violationCount;
 	}
