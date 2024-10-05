@@ -19,13 +19,7 @@ public class DCVerifier {
 	boolean violationCountTwice;
 	
 	public DCVerifier(Constraint DC, InputTable input) {
-		this.atomDCs = DC.decompose();
-		System.out.println("Constraints after decomposition:");
-		for (Constraint atomDC : atomDCs) {
-			System.out.println("- " + atomDC);
-		}
 		this.input = input;
-		
 		boolean allEq = true;
 		for (Predicate pred : DC.predicates) {
 			if (!pred.operator.equals("==")) {
@@ -35,7 +29,12 @@ public class DCVerifier {
 		}
 		this.violationCountTwice = DC.isSymmetric && !allEq;
 		if (this.violationCountTwice) {
-			System.out.println("The number of violations will be counted twice due to symmetricity.");
+			System.out.println("[Optimaization] Prune constraints by symmetricity during decomposition");
+		}
+		this.atomDCs = DC.decompose();
+		System.out.println("Constraints after decomposition:");
+		for (Constraint atomDC : atomDCs) {
+			System.out.println("- " + atomDC);
 		}
 	}
 	
@@ -74,6 +73,11 @@ public class DCVerifier {
 			return countDups(homoEqLocs, earlyStop);
 		}
 		if (ops.size() == 1) {
+			if (earlyStop) {
+				System.out.println("[Type] Homogeneous DC (one inequality)");
+				System.out.println("[Optimaization] Only keep tack of min/max");
+				return boolViolationsMinMax(homoEqLocs, uneqLocs1.get(0), uneqLocs2.get(0), ops.get(0));
+			}
 			if (uneqLocs1.equals(uneqLocs2)) {
 				System.out.println("[Type] Homogeneous DC (one inequality)");
 				return countViolationsAVLTreeHomo(homoEqLocs, uneqLocs1.get(0), ops.get(0), earlyStop);
@@ -366,6 +370,48 @@ public class DCVerifier {
 			treesMapAsRightSide.get(eqValues).insert(input.data[i][uneqLocRight]);
 		}	
 		return violationCount;
+	}
+	
+	private long boolViolationsMinMax(ArrayList<Integer> homoEqLocs, Integer uneqLocLeft,
+			Integer uneqLocRight, String op) {
+	    /*
+	     * Only keep track of the min/max value when there is only one inequality.
+	     * For example, for NOT (s.A > t.B), when we insert x, we only need to make sure x.A is not larger than the min of existing B,
+	     * and x.B is not smaller than the max of existing A.
+	     */
+		Map<List<Integer>, Integer> extremeAsLeftSide = new HashMap<>();
+		Map<List<Integer>, Integer> extremeAsRightSide = new HashMap<>();
+		for (int i = 0; i < input.data.length; ++i) {
+			List<Integer> eqValues = new ArrayList<>();
+			for (int j : homoEqLocs) {
+				eqValues.add(input.data[i][j]);
+			}
+			if (extremeAsLeftSide.containsKey(eqValues)) {
+				if (op.endsWith("=") && (input.data[i][uneqLocLeft] == extremeAsRightSide.get(eqValues) ||
+						extremeAsLeftSide.get(eqValues) == input.data[i][uneqLocRight])) {
+					return 1;
+				}
+				if (op.startsWith(">") && (input.data[i][uneqLocLeft] > extremeAsRightSide.get(eqValues) ||
+						extremeAsLeftSide.get(eqValues) > input.data[i][uneqLocRight])) {
+					return 1;
+				}
+				if (op.startsWith("<") && (input.data[i][uneqLocLeft] < extremeAsRightSide.get(eqValues) ||
+						extremeAsLeftSide.get(eqValues) < input.data[i][uneqLocRight])) {
+					return 1;
+				}
+			} else {
+				extremeAsLeftSide.put(eqValues, input.data[i][uneqLocLeft]);
+				extremeAsRightSide.put(eqValues, input.data[i][uneqLocRight]);
+			}
+			if (op.startsWith(">")) {
+				extremeAsLeftSide.put(eqValues, Math.max(input.data[i][uneqLocLeft], extremeAsLeftSide.get(eqValues)));
+				extremeAsRightSide.put(eqValues, Math.min(input.data[i][uneqLocRight], extremeAsRightSide.get(eqValues)));
+			} else {
+				extremeAsLeftSide.put(eqValues, Math.min(input.data[i][uneqLocLeft], extremeAsLeftSide.get(eqValues)));
+				extremeAsRightSide.put(eqValues, Math.max(input.data[i][uneqLocRight], extremeAsRightSide.get(eqValues)));				
+			}
+		}	
+		return 0;
 	}
 	
 	private long countDups(ArrayList<Integer> colLocs, boolean earlyStop) {
