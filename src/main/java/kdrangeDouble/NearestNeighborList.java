@@ -1,6 +1,6 @@
-package kdrange;
+package kdrangeDouble;
 
-import java.util.*;
+import java.util.PriorityQueue;
 
 // Bjoern Heckel's solution to the KD-Tree n-nearest-neighbor problem
 
@@ -22,13 +22,13 @@ class NearestNeighborList<T> {
         }
     };
 
-    java.util.PriorityQueue<NeighborEntry<T>> m_Queue;
+    PriorityQueue<NeighborEntry<T>> m_Queue;
     int m_Capacity = 0;
 
     // constructor
     public NearestNeighborList(int capacity) {
         m_Capacity = capacity;
-        m_Queue = new java.util.PriorityQueue<NeighborEntry<T>>(m_Capacity);
+        m_Queue = new PriorityQueue<NeighborEntry<T>>(m_Capacity);
     }
 
     public int getMaxPriority() {

@@ -4,5 +4,5 @@ package kdrange;
 
 abstract class DistanceMetric {
     
-    protected abstract double distance(double [] a, double [] b);
+    protected abstract int distance(int [] a, int [] b);
 }

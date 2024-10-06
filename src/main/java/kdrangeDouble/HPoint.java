@@ -1,18 +1,18 @@
 // Hyper-Point class supporting KDTree class
 
-package kdrange;
+package kdrangeDouble;
 
 class HPoint {
 
-    protected int [] coord;
+    protected double [] coord;
 
     protected HPoint(int n) {
-	coord = new int [n];
+	coord = new double [n];
     }
 
-    protected HPoint(int [] x) {
+    protected HPoint(double [] x) {
 
-	coord = new int[x.length];
+	coord = new double[x.length];
 	for (int i=0; i<x.length; ++i) coord[i] = x[i];
     }
 
@@ -32,9 +32,8 @@ class HPoint {
 	return true;
     }
 
-    protected static int sqrdist(HPoint x, HPoint y) {
-	
-	return EuclideanDistance.sqrdist(x.coord, y.coord);
+    protected static double sqrdist(HPoint x, HPoint y) {
+		return EuclideanDistance.sqrdist(x.coord, y.coord);
     }
     
 

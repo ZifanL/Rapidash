@@ -1,15 +1,13 @@
-package kdrange;
+package kdrangeDouble;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.sql.SQLSyntaxErrorException;
+import java.util.*;
 
 public class KDTree {
 	
 	private KDTreeHelper<Integer> kd;
 	
-    public KDTree(int[][] arr) throws KeySizeException, KeyDuplicateException {
+    public KDTree(double[][] arr) throws KeySizeException, KeyDuplicateException {
     	kd = new KDTreeHelper<Integer>(arr[0].length);
     	List<Integer> indices = new ArrayList<>();
     	for (int i = 0; i < arr.length; i++) {
@@ -18,17 +16,18 @@ public class KDTree {
     	Collections.shuffle(indices);
     	for (int i : indices) kd.insert(arr[i], i);
     }
-    
-    
-    public Collection<Integer> query(int[] from, int[] to) throws KeySizeException {
-    	int[] toEx = new int[to.length];
+
+    public Collection<Integer> query(double[] from, double[] to) throws KeySizeException {
+		double[] toEx = new double[to.length];
     	for (int i = 0; i < to.length; i++) toEx[i] = to[i] - 1;
     	return kd.range(from, toEx);
     }
     
-    public int queryCount(int[] from, int[] to) throws KeySizeException {
-    	int[] toEx = new int[to.length];
+    public int queryCount(double[] from, double[] to) throws KeySizeException {
+		double[] toEx = new double[to.length];
     	for (int i = 0; i < to.length; i++) toEx[i] = to[i] - 1;
+		// System.out.println(Arrays.toString(from) + " " + Arrays.toString(toEx));
         return kd.rangeCount(from, toEx);
     }
+
 }
