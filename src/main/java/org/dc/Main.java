@@ -39,10 +39,27 @@ public class Main {
         	System.out.println("Using customized dataset: " + dataset);
         	System.out.println("Constraint: " + constraint);
         	System.out.println("");
-        	System.out.println("* Start violation detection");
+        	System.out.println("Start violation detection");
         	
+        	long startTime = System.nanoTime();
         	DCVerifier dcVerifier = new DCVerifier(constraint, input);
-        	System.out.println("Number of violations: " + dcVerifier.detectViolation(earlystop, treeType));
+        	long numberOfViolations = dcVerifier.detectViolation(earlystop, treeType);
+        	long endTime = System.nanoTime();
+            long duration = (endTime - startTime);  // in nanoseconds
+            double durationInMillis = duration / 1_000_000.0;  // convert to milliseconds
+        	
+        	System.out.println("======================================");
+        	if (earlystop) {
+        		if (numberOfViolations > 0) {
+        			System.out.println("[Result] A violation is found!");
+        		} else {
+        			System.out.println("[Result] No violations.");
+        		}
+        	} else {
+        		System.out.println("[Result] Number of violations: " + numberOfViolations);
+        	}
+        	System.out.println("[Execution time] " + durationInMillis + " ms");
+        	
     	}
     }
     

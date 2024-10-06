@@ -1,6 +1,7 @@
 package org.dc;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -32,7 +33,7 @@ public class DCVerifier {
 			System.out.println("[Optimaization] Prune constraints by symmetricity during decomposition");
 		}
 		this.atomDCs = DC.decompose();
-		System.out.println("Constraints after decomposition:");
+		System.out.println("[Decompose] Constraints after decomposition:");
 		for (Constraint atomDC : atomDCs) {
 			System.out.println("- " + atomDC);
 		}
@@ -53,7 +54,7 @@ public class DCVerifier {
 	}
 	
 	private long detectViolationSingle(Constraint DC, boolean earlyStop, String treeType) throws KeySizeException, KeyDuplicateException {
-		System.out.println("Detecting violations for: " + DC);
+		System.out.println("\nDetecting violations for: " + DC);
 		ArrayList<Integer> homoEqLocs = new ArrayList<Integer>();
 		// Column indices and operator of the inequalities
 		ArrayList<Integer> uneqLocs1 = new ArrayList<Integer>();
@@ -84,6 +85,15 @@ public class DCVerifier {
 			} else {
 				System.out.println("[Type] Heterogeneous DC (one inequality)");
 				return countViolationsAVLTreeHeter(homoEqLocs, uneqLocs1.get(0), uneqLocs2.get(0), ops.get(0), earlyStop);
+			}
+		}
+		
+		if (ops.size() == 2 && !earlyStop) {
+			if (uneqLocs1.equals(uneqLocs2)) {
+				System.out.println("[Type] Homogeneous DC (two inequalities)");
+				System.out.println("[Optimaization] Insert one column in an sorted order to reduce the tree dimension by one.");
+				return this.countViolationsAVLTreeHomoInsertInOrder(homoEqLocs, uneqLocs1.get(0), ops.get(0),
+						uneqLocs1.get(1), ops.get(1), earlyStop);
 			}
 		}
 		
@@ -339,6 +349,76 @@ public class DCVerifier {
 			}
 			treesMap.get(eqValues).insert(input.data[i][uneqLoc]);
 		}	
+		return violationCount;
+	}
+	
+	private long countViolationsAVLTreeHomoInsertInOrder(ArrayList<Integer> homoEqLocs, Integer uneqSortLoc, String opSort,
+			Integer uneqLoc, String op, boolean earlyStop) {
+	    /*
+	     * Applicable to constraints with two homogeneous inequality predicates.
+	     * Insert one column in a sorted order, and use AVL trees to check the other one.
+	     */
+		long violationCount = 0;
+		Map<List<Integer>, Integer> prevValueSortLoc = new HashMap<>();;
+		Map<List<Integer>, List<Integer>> prevValuesUneqLoc = new HashMap<>();
+		if (opSort.startsWith(">")) {
+			Arrays.sort(input.data, (a, b) -> Integer.compare(a[uneqSortLoc], b[uneqSortLoc]));
+		} else {
+			Arrays.sort(input.data, (a, b) -> Integer.compare(-a[uneqSortLoc], -b[uneqSortLoc]));
+		}
+		
+		Map<List<Integer>, AVLTree> treesMap = new HashMap<>();
+		for (int i = 0; i < input.data.length; ++i) {
+			List<Integer> eqValues = new ArrayList<>();
+			for (int j : homoEqLocs) {
+				eqValues.add(input.data[i][j]);
+			}
+			
+			if (prevValueSortLoc.containsKey(eqValues) && input.data[i][uneqSortLoc] != prevValueSortLoc.get(eqValues)) {
+				for (int value : prevValuesUneqLoc.get(eqValues)) {
+					treesMap.get(eqValues).insert(value);
+				}
+				if (opSort.endsWith("=")) {
+					AVLTree tempTree = new AVLTree();
+					for (int value : prevValuesUneqLoc.get(eqValues)) {
+						violationCount += tempTree.count(value, op);
+						violationCount += tempTree.count(value, reverseOp(op));
+						if (earlyStop && violationCount > 0) {
+							return violationCount;
+						}
+						tempTree.insert(value);
+					}
+				}
+				prevValuesUneqLoc.get(eqValues).clear();
+			} 
+			prevValueSortLoc.put(eqValues, input.data[i][uneqSortLoc]);
+			if (!prevValuesUneqLoc.containsKey(eqValues)) {
+				prevValuesUneqLoc.put(eqValues, new ArrayList<>());
+			}
+			prevValuesUneqLoc.get(eqValues).add(input.data[i][uneqLoc]);
+			
+			if (treesMap.containsKey(eqValues)) {
+				violationCount += treesMap.get(eqValues).count(input.data[i][uneqLoc], reverseOp(op));
+				if (earlyStop && violationCount > 0) {
+					return violationCount;
+				}
+			} else {
+				treesMap.put(eqValues, new AVLTree());
+			}
+		}
+		if (opSort.endsWith("=")) {
+			for (List<Integer> eqValues : prevValuesUneqLoc.keySet()) {
+				AVLTree tempTree = new AVLTree();
+				for (int value : prevValuesUneqLoc.get(eqValues)) {
+					violationCount += tempTree.count(value, op);
+					violationCount += tempTree.count(value, reverseOp(op));
+					if (earlyStop && violationCount > 0) {
+						return violationCount;
+					}
+					tempTree.insert(value);
+				}
+			}
+		}
 		return violationCount;
 	}
 	
